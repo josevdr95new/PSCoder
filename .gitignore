@@ -32,3 +32,8 @@ desktop.ini
 *.tmp
 *.bak
 *.out
+
+## Test scripts (local development only)
+Test-Human.ps1
+Test-PSCoder.ps1
+Verify-Fixes.ps1
