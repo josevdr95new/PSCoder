@@ -1,0 +1,34 @@
+# PSCoder - AI Coding Assistant for PowerShell
+
+## Sensitive / User Data
+.pscoder/
+*.json
+!package.json
+!tsconfig.json
+
+## Environment
+.env
+.env.local
+.env.*.local
+
+## PowerShell
+*.ps1xml
+*.psc1
+
+## Editor
+.idea/
+.vscode/settings.json
+*.swp
+*.swo
+*~
+
+## OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+## Build / Temp
+*.log
+*.tmp
+*.bak
+*.out
