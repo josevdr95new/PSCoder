@@ -1,0 +1,1171 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PSCoder - Asistente de Programacion con IA para PowerShell</title>
+    <style>
+        /* ===== Reset & Base ===== */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --bg-card: #1c2128;
+            --border: #30363d;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --text-muted: #6e7681;
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-purple: #bc8cff;
+            --accent-orange: #f0883e;
+            --accent-red: #f85149;
+            --accent-cyan: #39d2c0;
+            --accent-yellow: #d29922;
+            --gradient-hero: linear-gradient(135deg, #1a1e2e 0%, #0d1117 50%, #121820 100%);
+            --glow-blue: 0 0 20px rgba(88, 166, 255, 0.15);
+            --glow-green: 0 0 20px rgba(63, 185, 80, 0.15);
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Noto Sans, Helvetica, Arial, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+
+        a { color: var(--accent-blue); text-decoration: none; transition: color 0.2s; }
+        a:hover { color: var(--accent-cyan); text-decoration: underline; }
+
+        /* ===== Scrollbar ===== */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-primary); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+        /* ===== Navigation ===== */
+        nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+            background: rgba(13, 17, 23, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            padding: 0 2rem;
+            transition: box-shadow 0.3s;
+        }
+        nav.scrolled { box-shadow: 0 4px 20px rgba(0,0,0,0.4); }
+        .nav-inner {
+            max-width: 1200px; margin: 0 auto;
+            display: flex; align-items: center; justify-content: space-between;
+            height: 60px;
+        }
+        .nav-logo {
+            display: flex; align-items: center; gap: 10px;
+            font-weight: 700; font-size: 1.2rem; color: var(--accent-blue);
+        }
+        .nav-logo svg { width: 28px; height: 28px; }
+        .nav-links { display: flex; gap: 1.5rem; list-style: none; }
+        .nav-links a {
+            color: var(--text-secondary); font-size: 0.9rem;
+            transition: color 0.2s; text-decoration: none;
+        }
+        .nav-links a:hover { color: var(--text-primary); text-decoration: none; }
+        .nav-badge {
+            background: var(--accent-green); color: #000; font-size: 0.7rem;
+            padding: 2px 8px; border-radius: 10px; font-weight: 600; margin-left: 8px;
+        }
+        .hamburger {
+            display: none; background: none; border: none; cursor: pointer;
+            color: var(--text-primary); font-size: 1.5rem;
+        }
+
+        /* ===== Hero ===== */
+        .hero {
+            min-height: 100vh; display: flex; align-items: center; justify-content: center;
+            background: var(--gradient-hero);
+            position: relative; overflow: hidden;
+            padding: 6rem 2rem 4rem;
+        }
+        .hero::before {
+            content: ''; position: absolute; top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: radial-gradient(circle at 30% 40%, rgba(88,166,255,0.06) 0%, transparent 50%),
+                        radial-gradient(circle at 70% 60%, rgba(188,140,255,0.04) 0%, transparent 50%),
+                        radial-gradient(circle at 50% 80%, rgba(63,185,80,0.03) 0%, transparent 50%);
+            animation: float 20s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(2%, -1%) rotate(1deg); }
+            66% { transform: translate(-1%, 1%) rotate(-1deg); }
+        }
+        .hero-content {
+            position: relative; z-index: 1; text-align: center;
+            max-width: 900px;
+        }
+        .hero-badges {
+            display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap;
+            margin-bottom: 2rem;
+        }
+        .hero-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: var(--bg-tertiary); border: 1px solid var(--border);
+            padding: 6px 14px; border-radius: 20px; font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        .hero-badge img { height: 16px; }
+        .hero h1 {
+            font-size: clamp(2.5rem, 6vw, 4.5rem);
+            font-weight: 800; line-height: 1.1;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, #e6edf3 0%, #58a6ff 50%, #bc8cff 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .hero h1 span {
+            background: linear-gradient(135deg, #58a6ff, #3fb950);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .hero-subtitle {
+            font-size: clamp(1.1rem, 2.5vw, 1.4rem);
+            color: var(--text-secondary); margin-bottom: 2.5rem;
+            max-width: 700px; margin-left: auto; margin-right: auto;
+        }
+        .hero-actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+        .btn {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 12px 28px; border-radius: 8px; font-size: 1rem;
+            font-weight: 600; transition: all 0.2s; border: none; cursor: pointer;
+            text-decoration: none;
+        }
+        .btn-primary {
+            background: var(--accent-blue); color: #fff;
+        }
+        .btn-primary:hover {
+            background: #79b8ff; color: #fff; text-decoration: none;
+            box-shadow: var(--glow-blue);
+        }
+        .btn-secondary {
+            background: var(--bg-tertiary); color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+        .btn-secondary:hover {
+            background: var(--border); color: #fff; text-decoration: none;
+        }
+
+        /* ===== Terminal Animation ===== */
+        .terminal-demo {
+            margin-top: 3rem; background: #010409; border: 1px solid var(--border);
+            border-radius: 12px; overflow: hidden; max-width: 750px; margin-left: auto; margin-right: auto;
+            text-align: left; font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+            font-size: 0.85rem;
+        }
+        .terminal-header {
+            background: var(--bg-tertiary); padding: 10px 16px;
+            display: flex; align-items: center; gap: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+        .terminal-dot { width: 12px; height: 12px; border-radius: 50%; }
+        .terminal-dot.red { background: #f85149; }
+        .terminal-dot.yellow { background: #d29922; }
+        .terminal-dot.green { background: #3fb950; }
+        .terminal-title { color: var(--text-muted); margin-left: 8px; font-size: 0.8rem; }
+        .terminal-body { padding: 1.2rem; line-height: 1.8; }
+        .terminal-body .prompt { color: var(--accent-green); }
+        .terminal-body .cmd { color: var(--accent-cyan); }
+        .terminal-body .ai { color: var(--accent-purple); }
+        .terminal-body .tool { color: var(--accent-yellow); }
+        .terminal-body .result { color: var(--text-secondary); }
+        .terminal-body .cursor {
+            display: inline-block; width: 8px; height: 16px;
+            background: var(--accent-green); animation: blink 1s step-end infinite;
+            vertical-align: text-bottom;
+        }
+        @keyframes blink { 50% { opacity: 0; } }
+
+        /* ===== Section ===== */
+        .section {
+            padding: 5rem 2rem;
+            max-width: 1200px; margin: 0 auto;
+        }
+        .section-header {
+            text-align: center; margin-bottom: 3.5rem;
+        }
+        .section-header h2 {
+            font-size: clamp(1.8rem, 4vw, 2.5rem);
+            font-weight: 700; margin-bottom: 1rem;
+        }
+        .section-header p {
+            color: var(--text-secondary); font-size: 1.1rem;
+            max-width: 600px; margin: 0 auto;
+        }
+        .section-divider {
+            width: 60px; height: 3px; margin: 1rem auto 0;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+            border-radius: 2px;
+        }
+
+        /* ===== Features Grid ===== */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+        .feature-card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 12px; padding: 2rem;
+            transition: all 0.3s; position: relative; overflow: hidden;
+        }
+        .feature-card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0;
+            height: 3px; background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+            opacity: 0; transition: opacity 0.3s;
+        }
+        .feature-card:hover {
+            border-color: var(--accent-blue);
+            box-shadow: var(--glow-blue);
+            transform: translateY(-2px);
+        }
+        .feature-card:hover::before { opacity: 1; }
+        .feature-icon {
+            width: 48px; height: 48px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem; margin-bottom: 1rem;
+            background: rgba(88,166,255,0.1); color: var(--accent-blue);
+        }
+        .feature-icon.green { background: rgba(63,185,80,0.1); color: var(--accent-green); }
+        .feature-icon.purple { background: rgba(188,140,255,0.1); color: var(--accent-purple); }
+        .feature-icon.orange { background: rgba(240,136,62,0.1); color: var(--accent-orange); }
+        .feature-icon.cyan { background: rgba(57,210,192,0.1); color: var(--accent-cyan); }
+        .feature-icon.red { background: rgba(248,81,73,0.1); color: var(--accent-red); }
+        .feature-icon.yellow { background: rgba(210,153,34,0.1); color: var(--accent-yellow); }
+        .feature-card h3 { font-size: 1.15rem; margin-bottom: 0.75rem; }
+        .feature-card p { color: var(--text-secondary); font-size: 0.95rem; }
+
+        /* ===== Tools Section ===== */
+        .tools-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1rem;
+        }
+        .tool-item {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 10px; padding: 1.25rem 1.5rem;
+            display: flex; align-items: flex-start; gap: 12px;
+            transition: all 0.2s;
+        }
+        .tool-item:hover {
+            border-color: var(--accent-blue);
+            background: rgba(88,166,255,0.03);
+        }
+        .tool-icon-sm {
+            min-width: 36px; height: 36px; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(88,166,255,0.1); color: var(--accent-blue);
+            font-size: 1rem;
+        }
+        .tool-item code {
+            color: var(--accent-cyan); font-family: 'Cascadia Code', 'Fira Code', monospace;
+            font-size: 0.85rem;
+        }
+        .tool-item p { color: var(--text-secondary); font-size: 0.88rem; margin-top: 4px; }
+
+        /* ===== Skills Section ===== */
+        .skills-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 1.25rem;
+        }
+        .skill-card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 12px; padding: 1.75rem;
+            position: relative; overflow: hidden;
+            transition: all 0.3s;
+        }
+        .skill-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+        }
+        .skill-tag {
+            display: inline-block; padding: 3px 10px; border-radius: 12px;
+            font-size: 0.75rem; font-weight: 600; margin-bottom: 0.75rem;
+        }
+        .skill-tag.research { background: rgba(88,166,255,0.15); color: var(--accent-blue); }
+        .skill-tag.analysis { background: rgba(63,185,80,0.15); color: var(--accent-green); }
+        .skill-tag.debug { background: rgba(248,81,73,0.15); color: var(--accent-red); }
+        .skill-tag.code { background: rgba(188,140,255,0.15); color: var(--accent-purple); }
+        .skill-tag.refactor { background: rgba(240,136,62,0.15); color: var(--accent-orange); }
+        .skill-tag.admin { background: rgba(57,210,192,0.15); color: var(--accent-cyan); }
+        .skill-tag.data { background: rgba(210,153,34,0.15); color: var(--accent-yellow); }
+        .skill-tag.docs { background: rgba(139,148,158,0.15); color: var(--text-secondary); }
+        .skill-card h3 { font-size: 1.1rem; margin-bottom: 0.5rem; }
+        .skill-card p { color: var(--text-secondary); font-size: 0.9rem; }
+
+        /* ===== Architecture ===== */
+        .arch-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+        .arch-block {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 12px; padding: 1.75rem; overflow: hidden;
+        }
+        .arch-block h3 {
+            font-size: 1.1rem; margin-bottom: 1rem;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .arch-block h3 .arch-icon {
+            width: 28px; height: 28px; border-radius: 6px;
+            display: inline-flex; align-items: center; justify-content: center;
+            font-size: 0.85rem;
+        }
+        .arch-tree {
+            font-family: 'Cascadia Code', 'Fira Code', monospace;
+            font-size: 0.82rem; line-height: 1.9;
+            color: var(--text-secondary);
+        }
+        .arch-tree .dir { color: var(--accent-blue); font-weight: 600; }
+        .arch-tree .file { color: var(--accent-cyan); }
+        .arch-tree .comment { color: var(--text-muted); font-style: italic; }
+
+        /* ===== Code Blocks ===== */
+        .code-block {
+            background: #010409; border: 1px solid var(--border);
+            border-radius: 10px; overflow: hidden; margin: 1.5rem 0;
+        }
+        .code-header {
+            background: var(--bg-tertiary); padding: 8px 16px;
+            display: flex; align-items: center; justify-content: space-between;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.8rem; color: var(--text-muted);
+        }
+        .code-body {
+            padding: 1rem 1.25rem; overflow-x: auto;
+            font-family: 'Cascadia Code', 'Fira Code', monospace;
+            font-size: 0.88rem; line-height: 1.7;
+        }
+        .code-body .kw { color: var(--accent-purple); }
+        .code-body .str { color: var(--accent-green); }
+        .code-body .var { color: var(--accent-cyan); }
+        .code-body .cmd { color: var(--accent-yellow); }
+        .code-body .comment { color: var(--text-muted); }
+        .code-body .op { color: var(--accent-red); }
+
+        /* ===== Quick Start ===== */
+        .quickstart-steps {
+            display: flex; flex-direction: column; gap: 1.5rem;
+            max-width: 800px; margin: 0 auto;
+        }
+        .step {
+            display: flex; gap: 1.25rem; align-items: flex-start;
+        }
+        .step-number {
+            min-width: 44px; height: 44px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 1.1rem; color: #fff;
+            flex-shrink: 0;
+        }
+        .step-content h3 { font-size: 1.1rem; margin-bottom: 0.4rem; }
+        .step-content p { color: var(--text-secondary); font-size: 0.95rem; }
+
+        /* ===== Commands Table ===== */
+        .table-wrapper {
+            overflow-x: auto; border: 1px solid var(--border);
+            border-radius: 12px; background: var(--bg-card);
+        }
+        table {
+            width: 100%; border-collapse: collapse; font-size: 0.9rem;
+        }
+        thead { background: var(--bg-tertiary); }
+        th {
+            text-align: left; padding: 12px 16px;
+            color: var(--text-secondary); font-weight: 600;
+            border-bottom: 1px solid var(--border);
+        }
+        td {
+            padding: 10px 16px; border-bottom: 1px solid var(--border);
+        }
+        tr:last-child td { border-bottom: none; }
+        tr:hover { background: rgba(88,166,255,0.03); }
+        code {
+            background: rgba(88,166,255,0.1); color: var(--accent-cyan);
+            padding: 2px 7px; border-radius: 4px;
+            font-family: 'Cascadia Code', 'Fira Code', monospace;
+            font-size: 0.85rem;
+        }
+
+        /* ===== Smart Systems ===== */
+        .systems-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.25rem;
+        }
+        .system-card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 12px; padding: 1.75rem;
+            display: flex; gap: 1rem; align-items: flex-start;
+            transition: all 0.2s;
+        }
+        .system-card:hover { border-color: var(--accent-purple); }
+        .system-icon {
+            min-width: 44px; height: 44px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.3rem; background: rgba(188,140,255,0.1); color: var(--accent-purple);
+        }
+        .system-card h3 { font-size: 1rem; margin-bottom: 0.4rem; }
+        .system-card p { color: var(--text-secondary); font-size: 0.88rem; }
+
+        /* ===== Data Storage ===== */
+        .data-tree-container {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 12px; padding: 2rem; max-width: 600px; margin: 0 auto;
+        }
+        .data-tree-container h3 { margin-bottom: 1rem; text-align: center; }
+        .data-tree {
+            font-family: 'Cascadia Code', 'Fira Code', monospace;
+            font-size: 0.85rem; line-height: 1.9;
+        }
+        .data-tree .dir-name { color: var(--accent-blue); font-weight: 600; }
+        .data-tree .file-name { color: var(--accent-cyan); }
+        .data-tree .desc { color: var(--text-muted); }
+
+        /* ===== Footer ===== */
+        footer {
+            background: var(--bg-secondary); border-top: 1px solid var(--border);
+            padding: 3rem 2rem; text-align: center;
+        }
+        .footer-inner { max-width: 800px; margin: 0 auto; }
+        .footer-links { display: flex; gap: 2rem; justify-content: center; margin-bottom: 1.5rem; flex-wrap: wrap; }
+        .footer-links a { color: var(--text-secondary); font-size: 0.9rem; }
+        .footer-links a:hover { color: var(--accent-blue); }
+        .footer-copy { color: var(--text-muted); font-size: 0.85rem; }
+        .footer-license {
+            display: inline-flex; align-items: center; gap: 6px;
+            margin-top: 0.75rem; color: var(--text-muted); font-size: 0.85rem;
+        }
+
+        /* ===== Responsive ===== */
+        @media (max-width: 768px) {
+            .nav-links { display: none; }
+            .hamburger { display: block; }
+            .nav-links.open {
+                display: flex; flex-direction: column;
+                position: absolute; top: 60px; left: 0; right: 0;
+                background: var(--bg-secondary); border-bottom: 1px solid var(--border);
+                padding: 1rem 2rem; gap: 1rem;
+            }
+            .arch-container { grid-template-columns: 1fr; }
+            .systems-grid { grid-template-columns: 1fr; }
+            .hero h1 { font-size: 2.2rem; }
+        }
+
+        /* ===== Animations ===== */
+        .fade-in {
+            opacity: 0; transform: translateY(20px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+
+        /* ===== Back to top ===== */
+        .back-to-top {
+            position: fixed; bottom: 2rem; right: 2rem;
+            width: 44px; height: 44px; border-radius: 50%;
+            background: var(--accent-blue); color: #fff;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; border: none; font-size: 1.2rem;
+            opacity: 0; pointer-events: none; transition: all 0.3s;
+            z-index: 50;
+        }
+        .back-to-top.show { opacity: 1; pointer-events: auto; }
+        .back-to-top:hover { background: #79b8ff; transform: translateY(-2px); }
+    </style>
+</head>
+<body>
+
+<!-- ===== Navigation ===== -->
+<nav id="navbar">
+    <div class="nav-inner">
+        <div class="nav-logo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="4 17 10 11 4 5"></polyline>
+                <line x1="12" y1="19" x2="20" y2="19"></line>
+            </svg>
+            PSCoder
+            <span class="nav-badge">v1.0</span>
+        </div>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="#features">Caracteristicas</a></li>
+            <li><a href="#tools">Herramientas</a></li>
+            <li><a href="#skills">Skills</a></li>
+            <li><a href="#architecture">Arquitectura</a></li>
+            <li><a href="#quickstart">Inicio Rapido</a></li>
+            <li><a href="#commands">Comandos</a></li>
+            <li><a href="#systems">Sistemas IA</a></li>
+        </ul>
+        <button class="hamburger" id="hamburger" aria-label="Menu">&#9776;</button>
+    </div>
+</nav>
+
+<!-- ===== Hero ===== -->
+<section class="hero" id="hero">
+    <div class="hero-content">
+        <div class="hero-badges">
+            <span class="hero-badge">
+                <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="MIT License">
+            </span>
+            <span class="hero-badge">
+                <img src="https://img.shields.io/badge/PowerShell-%3E%3D5.1-blue" alt="PowerShell 5.1+">
+            </span>
+            <span class="hero-badge">
+                <img src="https://img.shields.io/badge/GitHub-PSCoder-blue?logo=github" alt="GitHub">
+            </span>
+        </div>
+        <h1>PSCoder<br><span>Asistente de IA para PowerShell</span></h1>
+        <p class="hero-subtitle">
+            Un agente de programacion impulsado por IA que se ejecuta directamente en tu terminal de PowerShell.
+            Comprende tu codigo, edita archivos, busca en la web y resuelve problemas de forma autonoma.
+        </p>
+        <div class="hero-actions">
+            <a href="https://github.com/josevdr95new/PSCoder" class="btn btn-primary" target="_blank">
+                <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+                Ver en GitHub
+            </a>
+            <a href="#quickstart" class="btn btn-secondary">
+                Inicio Rapido &rarr;
+            </a>
+        </div>
+
+        <!-- Terminal Demo -->
+        <div class="terminal-demo">
+            <div class="terminal-header">
+                <span class="terminal-dot red"></span>
+                <span class="terminal-dot yellow"></span>
+                <span class="terminal-dot green"></span>
+                <span class="terminal-title">PSCoder - PowerShell</span>
+            </div>
+            <div class="terminal-body">
+                <div><span class="prompt">PS C:\Projects&gt;</span> <span class="cmd">Start-PSCoder</span></div>
+                <div style="color:var(--text-muted);margin:4px 0">PSCoder v1.0 - AI Coding Assistant</div>
+                <div style="margin-top:8px"><span class="prompt">[C:\Projects] [gpt-4o] &gt;</span> <span class="cmd">Como arreglo este error de PowerShell?</span></div>
+                <div style="margin-top:6px"><span class="ai">[IA]</span> <span class="tool">Cargando skill: debug-error...</span></div>
+                <div><span class="ai">[IA]</span> <span class="tool">Buscando soluciones previas...</span></div>
+                <div><span class="ai">[IA]</span> El error indica que el modulo no esta instalado. Ejecuta:</div>
+                <div style="margin-left:16px"><span class="result">Install-Module -Name MiModulo -Force</span></div>
+                <div style="margin-top:6px"><span class="prompt">[C:\Projects] [gpt-4o] &gt;</span> <span class="cursor"></span></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== Features ===== -->
+<section class="section" id="features">
+    <div class="section-header fade-in">
+        <h2>Caracteristicas Principales</h2>
+        <p>Todo lo que necesitas en un asistente de codigo impulsado por IA, directamente en tu terminal</p>
+        <div class="section-divider"></div>
+    </div>
+    <div class="features-grid">
+        <div class="feature-card fade-in">
+            <div class="feature-icon">&#128736;</div>
+            <h3>19 Herramientas Integradas</h3>
+            <p>Operaciones de archivos, ejecucion de comandos PowerShell, busqueda web, OCR, auto-curacion y mas. Cada herramienta esta disenada para interactuar con tu sistema de forma segura y eficiente.</p>
+        </div>
+        <div class="feature-card fade-in">
+            <div class="feature-icon green">&#9889;</div>
+            <h3>8 Skills Especializados</h3>
+            <p>Flujos de trabajo predefinidos para debugging, generacion de codigo, investigacion web, refactorizacion, administracion del sistema, extraccion de datos y documentacion.</p>
+        </div>
+        <div class="feature-card fade-in">
+            <div class="feature-icon purple">&#129504;</div>
+            <h3>Memoria Persistente</h3>
+            <p>Memoria a largo plazo que persiste entre sesiones. PSCoder recuerda tus preferencias, proyectos y soluciones anteriores para ofrecerte respuestas mas contextuales.</p>
+        </div>
+        <div class="feature-card fade-in">
+            <div class="feature-icon orange">&#127891;</div>
+            <h3>Auto-Aprendizaje</h3>
+            <p>Guarda automaticamente errores, soluciones y patrones para referencia futura. El sistema aprende de cada interaccion y mejora continuamente sus respuestas.</p>
+        </div>
+        <div class="feature-card fade-in">
+            <div class="feature-icon cyan">&#128137;</div>
+            <h3>Auto-Recuperacion</h3>
+            <p>Diagnostica errores y sugiere soluciones con enfoques alternativos. Clasifica los errores por tipo y provee comandos de arreglo rapido y estrategias de recuperacion.</p>
+        </div>
+        <div class="feature-card fade-in">
+            <div class="feature-icon red">&#128193;</div>
+            <h3>Historial de Sesiones</h3>
+            <p>Guarda, lista y carga conversaciones anteriores. Cada sesion captura mensajes, modelo, proveedor, tokens, costo y directorio de trabajo para continuity total.</p>
+        </div>
+    </div>
+</section>
+
+<!-- ===== Tools ===== -->
+<section class="section" id="tools" style="background: var(--bg-secondary); max-width: 100%; padding-left: calc((100% - 1200px)/2 + 2rem); padding-right: calc((100% - 1200px)/2 + 2rem);">
+    <div class="section-header fade-in">
+        <h2>19 Herramientas Integradas</h2>
+        <p>Cada herramienta es un modulo independiente con funciones especializadas</p>
+        <div class="section-divider"></div>
+    </div>
+    <div class="tools-container">
+        <div class="tool-item fade-in">
+            <div class="tool-icon-sm">&#9881;</div>
+            <div>
+                <code>execute_powershell</code>
+                <p>Ejecuta comandos PowerShell en ventana oculta sin interrumpir el chat, con proteccion de timeout</p>
+            </div>
+        </div>
+        <div class="tool-item fade-in">
+            <div class="tool-icon-sm">&#128196;</div>
+            <div>
+                <code>read_file</code>
+                <p>Lee el contenido completo de archivos con metadatos (lineas, tamano en bytes)</p>
+            </div>
+        </div>
+        <div class="tool-item fade-in">
+            <div class="tool-icon-sm">&#9997;</div>
+            <div>
+                <code>write_file</code>
+                <p>Crea o sobrescribe archivos, creando directorios padres automaticamente si no existen</p>
+            </div>
+        </div>
+        <div class="tool-item fade-in">
+            <div class="tool-icon-sm">&#9999;</div>
+            <div>
+                <code>edit_file</code>
+                <p>Reemplaza texto exacto en archivos existentes con busqueda y reemplazo preciso</p>
+            </div>
+        </div>
+        <div class="tool-item fade-in">
+            <div class="tool-icon-sm">&#128269;</div>
+            <div>
+                <code>search_files</code>
+                <p>Busca patrones regex en archivos (estilo grep), con filtro por tipo de archivo</p>
+            </div>
+        </div>
+        <div class="tool-item fade-in">
+            <div class="tool-icon-sm">&#128194;</div>
+            <div>
+                <code>glob_files</code>
+                <p>Encuentra archivos por patron con soporte de comodines recursivos (**)</p>
+            </div>
+        </div>
+        <div class="tool-item fade-in">
+            <div class="tool-icon-sm">&#128203;</div>
+            <div>
+                <code>list_directory</code>
+                <p>Lista archivos y subdirectorios con tipo, tamano y fecha de modificacion</p>
+            </div>
+        </div>
+        <div class="tool-item fade-in">
+            <div class="tool-icon-sm">&#127760;</div>
+            <div>
+                <code>web_search</code>
+                <p>Busqueda web con Brave API + DuckDuckGo como respaldo, con cache de 5 minutos</p>
+            </div>
+        </div>
+        <div class="tool-item fade-in">
+            <div class="tool-icon-sm">&#128229;</div>
+            <div>
+                <code>web_fetch</code>
+                <p>Obtiene contenido de URLs con soporte Markdown for Agents para ahorro de tokens</p>
+            </div>
+        </div>
+        <div class="tool-item fade-in">
+            <div class="tool-icon-sm">&#128247;</div>
+            <div>
+                <code>ocr_image</code>
+                <p>Extrae texto de imagenes usando OCR nativo de Windows (WinRT), sin instalacion adicional</p>
+            </div>
+        </div>
+        <div class="tool-item fade-in">
+            <div class="tool-icon-sm">&#128137;</div>
+            <div>
+                <code>auto_heal</code>
+                <p>Analiza errores y proporciona sugerencias estructuradas de recuperacion con arreglo rapido</p>
+            </div>
+        </div>
+        <div class="tool-item fade-in">
+            <div class="tool-icon-sm">&#127891;</div>
+            <div>
+                <code>learn_from_error</code>
+                <p>Registra soluciones para referencia futura en la base de datos de aprendizajes</p>
+            </div>
+        </div>
+        <div class="tool-item fade-in">
+            <div class="tool-icon-sm">&#128270;</div>
+            <div>
+                <code>find_solution</code>
+                <p>Busca problemas resueltos anteriormente por similitud de palabras clave</p>
+            </div>
+        </div>
+        <div class="tool-item fade-in">
+            <div class="tool-icon-sm">&#128203;</div>
+            <div>
+                <code>create_plan</code>
+                <p>Crea planes estructurados paso a paso con criterios de exito y herramientas sugeridas</p>
+            </div>
+        </div>
+        <div class="tool-item fade-in">
+            <div class="tool-icon-sm">&#9989;</div>
+            <div>
+                <code>verify_step</code>
+                <p>Verifica la ejecucion de un paso individual del plan con auto-curacion si falla</p>
+            </div>
+        </div>
+        <div class="tool-item fade-in">
+            <div class="tool-icon-sm">&#127942;</div>
+            <div>
+                <code>verify_task</code>
+                <p>Verifica el resultado completo de una tarea generando un informe de verificacion</p>
+            </div>
+        </div>
+        <div class="tool-item fade-in">
+            <div class="tool-icon-sm">&#128190;</div>
+            <div>
+                <code>save_learning</code>
+                <p>Guarda aprendizajes automaticamente en la base de datos de patrones</p>
+            </div>
+        </div>
+        <div class="tool-item fade-in">
+            <div class="tool-icon-sm">&#128218;</div>
+            <div>
+                <code>list_skills</code>
+                <p>Lista todos los flujos de trabajo especializados disponibles con sus descripciones</p>
+            </div>
+        </div>
+        <div class="tool-item fade-in">
+            <div class="tool-icon-sm">&#128214;</div>
+            <div>
+                <code>read_skill</code>
+                <p>Carga las instrucciones completas de un skill especifico por nombre</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== Skills ===== -->
+<section class="section" id="skills">
+    <div class="section-header fade-in">
+        <h2>8 Skills Especializados</h2>
+        <p>Flujos de trabajo predefinidos que el agente carga automaticamente segun la tarea</p>
+        <div class="section-divider"></div>
+    </div>
+    <div class="skills-grid">
+        <div class="skill-card fade-in">
+            <span class="skill-tag research">Investigacion</span>
+            <h3>Web Research</h3>
+            <p>Busca, obtiene y sintetiza informacion actualizada de la web. Incluye verificacion de compatibilidad de versiones y busqueda con terminos alternativos.</p>
+        </div>
+        <div class="skill-card fade-in">
+            <span class="skill-tag analysis">Analisis</span>
+            <h3>File Analysis</h3>
+            <p>Analiza estructura de proyectos, codebases y configuraciones. Construye un mapa mental del proyecto leyendo puntos de entrada primero.</p>
+        </div>
+        <div class="skill-card fade-in">
+            <span class="skill-tag debug">Debug</span>
+            <h3>Debug Error</h3>
+            <p>Diagnostica y resuelve errores con solucion sistematica en 9 pasos: verificar version, auto-heal, buscar soluciones, leer codigo, aplicar fix y verificar.</p>
+        </div>
+        <div class="skill-card fade-in">
+            <span class="skill-tag code">Generacion</span>
+            <h3>Code Generation</h3>
+            <p>Crea scripts, funciones y modulos nuevos desde cero. Respetando el estilo del proyecto, anadiendo manejo de errores y sin inventar APIs inexistentes.</p>
+        </div>
+        <div class="skill-card fade-in">
+            <span class="skill-tag refactor">Refactor</span>
+            <h3>Refactor</h3>
+            <p>Mejora calidad, legibilidad y rendimiento del codigo sin cambiar funcionalidad. Cambios pequenos y testeables, sin over-engineering.</p>
+        </div>
+        <div class="skill-card fade-in">
+            <span class="skill-tag admin">Admin</span>
+            <h3>PowerShell Admin</h3>
+            <p>Tareas de administracion de sistemas Windows: servicios, procesos, registro, usuarios, redes y permisos. Recomienda -WhatIf para operaciones destructivas.</p>
+        </div>
+        <div class="skill-card fade-in">
+            <span class="skill-tag data">Datos</span>
+            <h3>Data Extraction</h3>
+            <p>Parsea y transforma datos de archivos, APIs y paginas web. Usa regex, ConvertFrom-Json/Xml, y manejo de codificacion para extraccion limpia.</p>
+        </div>
+        <div class="skill-card fade-in">
+            <span class="skill-tag docs">Docs</span>
+            <h3>Documentation</h3>
+            <p>Crea y mejora documentacion de proyectos. Incluye ejemplos de codigo, documentacion de parametros y valores de retorno.</p>
+        </div>
+    </div>
+</section>
+
+<!-- ===== Architecture ===== -->
+<section class="section" id="architecture" style="background: var(--bg-secondary); max-width: 100%; padding-left: calc((100% - 1200px)/2 + 2rem); padding-right: calc((100% - 1200px)/2 + 2rem);">
+    <div class="section-header fade-in">
+        <h2>Arquitectura del Proyecto</h2>
+        <p>Estructura modular y organizada por capas de responsabilidad</p>
+        <div class="section-divider"></div>
+    </div>
+    <div class="arch-container">
+        <div class="arch-block fade-in">
+            <h3>
+                <span class="arch-icon" style="background:rgba(88,166,255,0.15);color:var(--accent-blue);">API</span>
+                Capa de API
+            </h3>
+            <div class="arch-tree">
+                <span class="dir">API/</span><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">BaseClient.ps1</span> <span class="comment"># Cliente HTTP con reintentos</span><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">OpenRouter.ps1</span> <span class="comment"># Integracion OpenRouter</span><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">Groq.ps1</span> <span class="comment"># Integracion Groq</span>
+            </div>
+        </div>
+        <div class="arch-block fade-in">
+            <h3>
+                <span class="arch-icon" style="background:rgba(63,185,80,0.15);color:var(--accent-green);">Core</span>
+                Nucleo del Sistema
+            </h3>
+            <div class="arch-tree">
+                <span class="dir">Core/</span><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">Main-Loop.ps1</span> <span class="comment"># Bucle principal REPL</span><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">SystemPrompt.ps1</span> <span class="comment"># Prompt del sistema</span><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">ContextBuilder.ps1</span> <span class="comment"># Contexto Git+Proyecto</span><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">ReasoningEngine.ps1</span> <span class="comment"># Planificacion</span><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">AutoHealing.ps1</span> <span class="comment"># Auto-recuperacion</span><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">AutoImprove.ps1</span> <span class="comment"># Auto-aprendizaje</span><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">MemoryDecision.ps1</span> <span class="comment"># Decisiones de memoria</span><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">Permissions.ps1</span> <span class="comment"># Sistema de permisos</span><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">Hooks.ps1</span> <span class="comment"># Hooks pre/post</span><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">AgentNarration.ps1</span> <span class="comment"># Narracion visual+voz</span><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">Logger.ps1</span> <span class="comment"># Sistema de logging</span><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">Init.ps1</span> <span class="comment"># Inicializacion</span><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">InterruptHandler.ps1</span> <span class="comment"># Manejo de interrupciones</span>
+            </div>
+        </div>
+        <div class="arch-block fade-in">
+            <h3>
+                <span class="arch-icon" style="background:rgba(188,140,255,0.15);color:var(--accent-purple);">Tools</span>
+                Herramientas
+            </h3>
+            <div class="arch-tree">
+                <span class="dir">Tools/</span><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">Invoke-Tool.ps1</span> <span class="comment"># Despachador central</span><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">ToolRegistry.ps1</span> <span class="comment"># Esquemas para LLM</span><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">ExecutePowerShell.ps1</span> <span class="comment"># Ejecucion PS</span><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">ReadFile.ps1</span> / <span class="file">WriteFile.ps1</span> / <span class="file">EditFile.ps1</span><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">SearchFiles.ps1</span> / <span class="file">GlobFiles.ps1</span> / <span class="file">ListDirectory.ps1</span><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">WebSearch.ps1</span> / <span class="file">WebFetch.ps1</span><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">OcrImage.ps1</span> <span class="comment"># OCR nativo Windows</span><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">SkillManager.ps1</span> <span class="comment"># Gestor de skills</span><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">Cache.ps1</span> <span class="comment"># Sistema de cache</span>
+            </div>
+        </div>
+        <div class="arch-block fade-in">
+            <h3>
+                <span class="arch-icon" style="background:rgba(240,136,62,0.15);color:var(--accent-orange);">Otros</span>
+                Modulos Complementarios
+            </h3>
+            <div class="arch-tree">
+                <span class="dir">Commands/</span><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">SlashCommands.ps1</span> <span class="comment"># Comandos /help, /model...</span><br><br>
+                <span class="dir">Config/</span><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">Config.ps1</span> <span class="comment"># Configuracion JSON</span><br><br>
+                <span class="dir">History/</span><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">History.ps1</span> <span class="comment"># Sesiones guardadas</span><br><br>
+                <span class="dir">Memory/</span><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">Memory.ps1</span> <span class="comment"># Memoria persistente</span><br><br>
+                <span class="dir">Skills/</span><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">8 archivos .md</span> <span class="comment"># Instrucciones por skill</span><br><br>
+                <span class="dir">UI/</span><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">Formatter.ps1</span> <span class="comment"># Formato CLI</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== Quick Start ===== -->
+<section class="section" id="quickstart">
+    <div class="section-header fade-in">
+        <h2>Inicio Rapido</h2>
+        <p>Comienza a usar PSCoder en 3 simples pasos</p>
+        <div class="section-divider"></div>
+    </div>
+    <div class="quickstart-steps">
+        <div class="step fade-in">
+            <div class="step-number">1</div>
+            <div class="step-content">
+                <h3>Clonar el repositorio</h3>
+                <p>Copia el repositorio de GitHub a tu maquina local y navega al directorio del proyecto.</p>
+                <div class="code-block">
+                    <div class="code-header"><span>PowerShell</span></div>
+                    <div class="code-body">
+                        <span class="var">git</span> clone https://github.com/josevdr95new/PSCoder.git<br>
+                        <span class="var">cd</span> PSCoder
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="step fade-in">
+            <div class="step-number">2</div>
+            <div class="step-content">
+                <h3>Configurar tu clave API</h3>
+                <p>Necesitas una clave API de OpenRouter (recomendado) o Groq. Configurala como variable de entorno o interactivamente.</p>
+                <div class="code-block">
+                    <div class="code-header"><span>PowerShell - Opcion 1: Variable de entorno</span></div>
+                    <div class="code-body">
+                        <span class="var">$env</span>:OPENROUTER_API_KEY = <span class="str">"tu-clave-aqui"</span>
+                    </div>
+                </div>
+                <div class="code-block">
+                    <div class="code-header"><span>PowerShell - Opcion 2: Configuracion interactiva</span></div>
+                    <div class="code-body">
+                        <span class="cmd">Start-PSCoder</span><br>
+                        <span class="comment"># Luego usa: /config apiKey tu-clave-aqui</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="step fade-in">
+            <div class="step-number">3</div>
+            <div class="step-content">
+                <h3>Iniciar PSCoder</h3>
+                <p>Ejecuta el asistente y comienza a interactuar con la IA. Tambien puedes usar el archivo .bat para Windows.</p>
+                <div class="code-block">
+                    <div class="code-header"><span>PowerShell</span></div>
+                    <div class="code-body">
+                        <span class="comment"># Importar y ejecutar</span><br>
+                        <span class="cmd">Import-Module</span> .\PSCoder.psd1<br>
+                        <span class="cmd">Start-PSCoder</span><br><br>
+                        <span class="comment"># O directamente:</span><br>
+                        .\Start-PSCoder.ps1<br><br>
+                        <span class="comment"># O con modelo especifico:</span><br>
+                        .\Start-PSCoder.ps1 -Model <span class="str">"openai/gpt-4o"</span> -Provider <span class="str">"openrouter"</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== Commands ===== -->
+<section class="section" id="commands" style="background: var(--bg-secondary); max-width: 100%; padding-left: calc((100% - 1200px)/2 + 2rem); padding-right: calc((100% - 1200px)/2 + 2rem);">
+    <div class="section-header fade-in">
+        <h2>Comandos Disponibles</h2>
+        <p>Controla PSCoder con comandos slash directamente en el chat</p>
+        <div class="section-divider"></div>
+    </div>
+    <div class="table-wrapper" style="max-width:900px;margin:0 auto;">
+        <table>
+            <thead>
+                <tr>
+                    <th>Comando</th>
+                    <th>Descripcion</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td><code>/help</code></td><td>Muestra todos los comandos disponibles</td></tr>
+                <tr><td><code>/clear</code></td><td>Limpia la conversacion actual</td></tr>
+                <tr><td><code>/new</code></td><td>Nueva conversacion (recarga la memoria)</td></tr>
+                <tr><td><code>/model</code></td><td>Cambia el modelo de IA (gpt-4o, gemini, qwen, etc.)</td></tr>
+                <tr><td><code>/provider</code></td><td>Cambia el proveedor (openrouter / groq)</td></tr>
+                <tr><td><code>/history</code></td><td>Lista las sesiones guardadas</td></tr>
+                <tr><td><code>/load &lt;id&gt;</code></td><td>Carga una sesion anterior por su ID</td></tr>
+                <tr><td><code>/memory</code></td><td>Muestra la memoria a largo plazo</td></tr>
+                <tr><td><code>/memory add X</code></td><td>Agrega informacion a la memoria</td></tr>
+                <tr><td><code>/memory edit</code></td><td>Abre el archivo de memoria en el editor</td></tr>
+                <tr><td><code>/memory clear</code></td><td>Limpia toda la memoria persistente</td></tr>
+                <tr><td><code>/tools</code></td><td>Lista las herramientas disponibles</td></tr>
+                <tr><td><code>/config</code></td><td>Muestra o cambia la configuracion</td></tr>
+                <tr><td><code>/narrate on</code></td><td>Activa la narracion del agente (visual + voz)</td></tr>
+                <tr><td><code>/narrate off</code></td><td>Desactiva la narracion</td></tr>
+                <tr><td><code>/speak &lt;texto&gt;</code></td><td>Lee texto personalizado en voz alta</td></tr>
+                <tr><td><code>/exit</code></td><td>Guarda la sesion y sale de PSCoder</td></tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<!-- ===== Smart Systems ===== -->
+<section class="section" id="systems">
+    <div class="section-header fade-in">
+        <h2>Sistemas Inteligentes</h2>
+        <p>Mecanismos avanzados que hacen a PSCoder autonomo y auto-mejorable</p>
+        <div class="section-divider"></div>
+    </div>
+    <div class="systems-grid">
+        <div class="system-card fade-in">
+            <div class="system-icon">&#129504;</div>
+            <div>
+                <h3>Memory Decision</h3>
+                <p>Analiza cada turno de conversacion y decide automaticamente que informacion vale la pena persistir: errores resueltos, preferencias del usuario, contexto de proyecto, patrones de exito y flujos de comandos.</p>
+            </div>
+        </div>
+        <div class="system-card fade-in">
+            <div class="system-icon">&#9881;</div>
+            <div>
+                <h3>Reasoning Engine</h3>
+                <p>Motor de planificacion que crea planes paso a paso con herramientas sugeridas y criterios de exito. Verifica cada paso individualmente y la tarea completa, con auto-curacion si un paso falla.</p>
+            </div>
+        </div>
+        <div class="system-card fade-in">
+            <div class="system-icon">&#128274;</div>
+            <div>
+                <h3>Sistema de Permisos</h3>
+                <p>4 modos de permisos: Default (lecturas auto-aprobadas), AcceptEdits (auto-aprobar todo), BypassPermissions (sin aprobacion) y Plan (solo lecturas). Detecta comandos peligrosos como Remove-Item o Format-Volume.</p>
+            </div>
+        </div>
+        <div class="system-card fade-in">
+            <div class="system-icon">&#128276;</div>
+            <div>
+                <h3>Hooks</h3>
+                <p>Sistema de hooks PreToolUse (puede bloquear ejecucion), PostToolUse (corre despues de ejecutar) y Stop (al final de cada turno). Scripts personalizables en ~/.pscoder/hooks/.</p>
+            </div>
+        </div>
+        <div class="system-card fade-in">
+            <div class="system-icon">&#128202;</div>
+            <div>
+                <h3>Context Builder</h3>
+                <p>Incluye automaticamente estado de Git (commits recientes, cambios sin commitear) y busca archivos PSCODER.md con instrucciones especificas del proyecto. Cache en memoria de 2 minutos.</p>
+            </div>
+        </div>
+        <div class="system-card fade-in">
+            <div class="system-icon">&#127908;</div>
+            <div>
+                <h3>Agent Narration</h3>
+                <p>Retroalimentacion visual y por voz de las acciones del agente. Usa Windows SAPI para texto-a-voz, con colores diferenciados para pensamientos, acciones, resultados y errores.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== Data Storage ===== -->
+<section class="section" id="data" style="background: var(--bg-secondary); max-width: 100%; padding-left: calc((100% - 1200px)/2 + 2rem); padding-right: calc((100% - 1200px)/2 + 2rem);">
+    <div class="section-header fade-in">
+        <h2>Almacenamiento de Datos</h2>
+        <p>Todos los datos del usuario se guardan en ~/.pscoder/ &mdash; nada sensible en el repositorio</p>
+        <div class="section-divider"></div>
+    </div>
+    <div class="data-tree-container fade-in">
+        <div class="data-tree">
+            <span class="dir-name">~/.pscoder/</span><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;<span class="file-name">config.json</span> <span class="desc">&mdash; Configuracion (API keys, modelo, etc.)</span><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;<span class="file-name">MEMORY.md</span> <span class="desc">&mdash; Memoria a largo plazo</span><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;<span class="dir-name">Sessions/</span> <span class="desc">&mdash; Sesiones de conversacion guardadas</span><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;<span class="dir-name">improve/</span><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="file-name">learnings.json</span> <span class="desc">&mdash; Aprendizajes registrados</span><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="file-name">patterns.json</span> <span class="desc">&mdash; Patrones aprendidos</span><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;<span class="dir-name">cache/</span> <span class="desc">&mdash; Cache de busqueda/obtencion web</span><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;<span class="dir-name">reasoning/</span> <span class="desc">&mdash; Historial de planes</span><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;<span class="dir-name">memory_decisions/</span> <span class="desc">&mdash; Registro de decisiones automaticas</span><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;<span class="dir-name">hooks/</span> <span class="desc">&mdash; Scripts de hooks personalizados</span>
+        </div>
+    </div>
+</section>
+
+<!-- ===== API Providers ===== -->
+<section class="section" id="providers">
+    <div class="section-header fade-in">
+        <h2>Proveedores de IA</h2>
+        <p>Compatible con multiples proveedores y modelos de lenguaje</p>
+        <div class="section-divider"></div>
+    </div>
+    <div class="features-grid" style="max-width:800px;margin:0 auto;">
+        <div class="feature-card fade-in">
+            <div class="feature-icon">&#127760;</div>
+            <h3>OpenRouter (Recomendado)</h3>
+            <p>Agregador que da acceso a GPT-4o, Gemini, Llama, Qwen, DeepSeek, Mistral y mas. Incluye modelos gratuitos y de pago. Cambio de modelo en caliente con <code>/model</code>.</p>
+        </div>
+        <div class="feature-card fade-in">
+            <div class="feature-icon green">&#9889;</div>
+            <h3>Groq (Inferencia Rapida)</h3>
+            <p>Inferencia ultrarapida para Llama, Mixtral, Gemma y Qwen. Ideal para respuestas rapidas. Soporta reasoning_effort y max_completion_tokens.</p>
+        </div>
+    </div>
+    <div class="code-block fade-in" style="max-width:800px;margin:2rem auto 0;">
+        <div class="code-header"><span>Cambio de modelo y proveedor</span></div>
+        <div class="code-body">
+            <span class="comment"># Cambiar modelo</span><br>
+            /model openai/gpt-4o<br>
+            /model google/gemini-2.5-flash<br>
+            /model qwen/qwen3.6-plus:free<br><br>
+            <span class="comment"># Cambiar proveedor</span><br>
+            /provider openrouter<br>
+            /provider groq
+        </div>
+    </div>
+</section>
+
+<!-- ===== Footer ===== -->
+<footer>
+    <div class="footer-inner">
+        <div class="footer-links">
+            <a href="https://github.com/josevdr95new/PSCoder" target="_blank">GitHub</a>
+            <a href="https://github.com/josevdr95new/PSCoder/blob/main/LICENSE" target="_blank">Licencia MIT</a>
+            <a href="https://openrouter.ai" target="_blank">OpenRouter</a>
+            <a href="https://groq.com" target="_blank">Groq</a>
+        </div>
+        <p class="footer-copy">PSCoder &mdash; Asistente de Programacion con IA para PowerShell</p>
+        <p class="footer-license">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="var(--text-muted)"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+            Repositorio: github.com/josevdr95new/PSCoder
+        </p>
+    </div>
+</footer>
+
+<!-- Back to Top -->
+<button class="back-to-top" id="backToTop" aria-label="Volver arriba">&uarr;</button>
+
+<!-- ===== JavaScript ===== -->
+<script>
+// Nav scroll effect
+const navbar = document.getElementById('navbar');
+window.addEventListener('scroll', () => {
+    navbar.classList.toggle('scrolled', window.scrollY > 50);
+    const btn = document.getElementById('backToTop');
+    btn.classList.toggle('show', window.scrollY > 500);
+});
+
+// Back to top
+document.getElementById('backToTop').addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
+// Hamburger menu
+document.getElementById('hamburger').addEventListener('click', () => {
+    document.getElementById('navLinks').classList.toggle('open');
+});
+
+// Close mobile menu on link click
+document.querySelectorAll('.nav-links a').forEach(link => {
+    link.addEventListener('click', () => {
+        document.getElementById('navLinks').classList.remove('open');
+    });
+});
+
+// Scroll animations
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+        }
+    });
+}, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+// Smooth scroll for anchor links
+document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+            const offset = 70;
+            const top = target.getBoundingClientRect().top + window.pageYOffset - offset;
+            window.scrollTo({ top, behavior: 'smooth' });
+        }
+    });
+});
+</script>
+
+</body>
+</html>
