@@ -2,7 +2,9 @@
 # PSCoder.psm1 - Main module for PSCoder
 
 # Configure UTF-8 encoding for special characters
+try { chcp 65001 | Out-Null } catch {}
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+[Console]::InputEncoding = [System.Text.Encoding]::UTF8
 $OutputEncoding = [System.Text.Encoding]::UTF8
 $PSDefaultParameterValues['*:Encoding'] = 'utf8'
 

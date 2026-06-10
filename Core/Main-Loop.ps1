@@ -142,7 +142,7 @@ function Start-PSCoder {
         while ($continueLoop -and $round -lt $maxRounds) {
             $round++
             $queryDepth++
-            $toolSchemas = Get-ToolSchemas
+            $toolSchemas = if ($config.toolsEnabled -ne $false) { Get-ToolSchemas } else { @() }
 
             Write-AgentThought -Thought "Processing your request..."
             Write-ThinkingStart

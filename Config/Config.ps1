@@ -8,7 +8,7 @@ $Script:DefaultConfig = @{
     groqApiKey      = ""
     braveSearchApiKey = ""
     provider        = "openrouter"
-    model           = "qwen/qwen3.6-plus:free"
+    model           = "nvidia/nemotron-3-super-120b-a12b:free"
     maxTokens       = 4096
     temperature     = 0.7
     permissions     = @{ autoApprove = $false; dangerousCommands = "ask" }
@@ -20,6 +20,7 @@ $Script:DefaultConfig = @{
     speechEnabled   = $true
     speechRate      = 0
     speechVolume    = 100
+    toolsEnabled    = $true
 }
 
 function Convert-PSObjectToHashtable {
@@ -44,6 +45,9 @@ function Convert-PSObjectToHashtable {
 }
 
 function Initialize-PSCoderConfig {
+    if (-not (Test-Path $Script:PSCoderConfigDir)) {
+        New-Item -ItemType Directory -Path $Script:PSCoderConfigDir -Force | Out-Null
+    }
     if (-not (Test-Path $Script:PSCoderConfigFile)) {
         $Script:DefaultConfig | ConvertTo-Json -Depth 10 | Set-Content -Path $Script:PSCoderConfigFile -Encoding UTF8
     }

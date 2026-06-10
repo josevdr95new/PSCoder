@@ -31,7 +31,7 @@ return $true
 # Variables available: `$ToolName, `$ToolInput, `$ToolOutput, `$IsError, `$SessionId
 
 # Example: log all tool executions
-# `$logEntry = "[$(Get-Date -Format 'HH:mm:ss')] `$ToolName -> $(if(`$IsError){'ERROR'}else{'OK'})"
+# `$logEntry = "[`$(Get-Date -Format 'HH:mm:ss')] `$ToolName -> `$(if(`$IsError){'ERROR'}else{'OK'})"
 # Add-Content -Path "`$env:TEMP\pscoder_hooks.log" -Value `$logEntry
 
 "@ | Set-Content -Path $postToolFile -Encoding UTF8

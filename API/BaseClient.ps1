@@ -28,7 +28,28 @@ function Invoke-APIChat {
 
     while ($true) {
         try {
-            $response = Invoke-RestMethod -Uri $Uri -Method Post -Headers $Headers -Body $jsonBody -TimeoutSec $Script:RequestTimeoutSec
+            $request = [System.Net.HttpWebRequest]::Create($Uri)
+            $request.Method = "POST"
+            $request.ContentType = "application/json; charset=utf-8"
+            $request.Timeout = $Script:RequestTimeoutSec * 1000
+            $request.ReadWriteTimeout = $Script:RequestTimeoutSec * 1000
+            foreach ($key in $Headers.Keys) {
+                if ($key -eq "Authorization") { $request.Headers.Add($key, $Headers[$key]) }
+                elseif ($key -eq "HTTP-Referer") { $request.Headers.Add($key, $Headers[$key]) }
+                elseif ($key -eq "X-OpenRouter-Title") { $request.Headers.Add($key, $Headers[$key]) }
+            }
+            $bodyBytes = [System.Text.Encoding]::UTF8.GetBytes($jsonBody)
+            $request.ContentLength = $bodyBytes.Length
+            $reqStream = $request.GetRequestStream()
+            $reqStream.Write($bodyBytes, 0, $bodyBytes.Length)
+            $reqStream.Close()
+            $webResponse = $request.GetResponse()
+            $respStream = $webResponse.GetResponseStream()
+            $reader = New-Object System.IO.StreamReader($respStream, [System.Text.Encoding]::UTF8)
+            $rawJson = $reader.ReadToEnd()
+            $reader.Close()
+            $webResponse.Close()
+            $response = $rawJson | ConvertFrom-Json
             Write-PSCoderLog -Level "DEBUG" -Message "$ProviderName API call successful" -Source "BaseClient"
             return $response
         }
