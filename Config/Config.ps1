@@ -6,9 +6,11 @@ $Script:PSCoderConfigFile = Join-Path $Script:PSCoderConfigDir "config.json"
 $Script:DefaultConfig = @{
     apiKey          = ""
     groqApiKey      = ""
+    orcaApiKey      = ""
     braveSearchApiKey = ""
     provider        = "openrouter"
     model           = "nvidia/nemotron-3-super-120b-a12b:free"
+    orcaModel       = "z-ai/glm-5.3-flash-free"
     maxTokens       = 4096
     temperature     = 0.7
     permissions     = @{ autoApprove = $false; dangerousCommands = "ask" }
@@ -98,6 +100,15 @@ function Get-GroqApiKey {
         return $config.groqApiKey
     }
     if ($env:GROQ_API_KEY) { return $env:GROQ_API_KEY }
+    return $null
+}
+
+function Get-OrcaRouterApiKey {
+    $config = Get-PSCoderConfig
+    if ($config.orcaApiKey -and $config.orcaApiKey -ne "") {
+        return $config.orcaApiKey
+    }
+    if ($env:ORCAROUTER_API_KEY) { return $env:ORCAROUTER_API_KEY }
     return $null
 }
 

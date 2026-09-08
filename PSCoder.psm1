@@ -22,6 +22,7 @@ $modulesToLoad = @(
     "API/BaseClient.ps1"
     "API/OpenRouter.ps1"
     "API/Groq.ps1"
+    "API/OrcaRouter.ps1"
     "Tools/WebSearch.ps1"
     "Tools/WebFetch.ps1"
     "Tools/OcrImage.ps1"

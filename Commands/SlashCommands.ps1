@@ -37,6 +37,8 @@ function Invoke-SlashCommand {
                 Get-ModelsList | ForEach-Object { Write-Host "  $_" -ForegroundColor Gray }
                 Write-Host "  [Groq]" -ForegroundColor Cyan
                 Get-GroqModelsList | ForEach-Object { Write-Host "  $_" -ForegroundColor Gray }
+                Write-Host "  [OrcaRouter]" -ForegroundColor Cyan
+                Get-OrcaRouterModelsList | ForEach-Object { Write-Host "  $_" -ForegroundColor Gray }
                 Write-Host "  Current: $($Model.Value)" -ForegroundColor Yellow
             }
             return "continue"
@@ -44,27 +46,32 @@ function Invoke-SlashCommand {
         "/provider" {
             if ($args) {
                 $prov = $args.ToLower()
-                if ($prov -in @("openrouter", "groq")) {
-                    $Provider.Value = $prov
+                if ($prov -in @("openrouter", "groq", "orca")) {
+                    $Provider.Value = if ($prov -eq "orca") { "orca" } else { $prov }
                     Set-PSCoderConfig -Updates @{ provider = $prov }
                     Write-InfoPS "Provider changed to: $prov"
                     if ($prov -eq "groq") {
                         Write-InfoPS "Default Groq model: qwen/qwen3-32b"
                         $Model.Value = "qwen/qwen3-32b"
                         Set-PSCoderConfig -Updates @{ model = "qwen/qwen3-32b" }
+                    } elseif ($prov -eq "orca") {
+                        Write-InfoPS "Default OrcaRouter model: z-ai/glm-5.3-flash-free (FREE)"
+                        $Model.Value = "z-ai/glm-5.3-flash-free"
+                        Set-PSCoderConfig -Updates @{ model = "z-ai/glm-5.3-flash-free"; orcaModel = "z-ai/glm-5.3-flash-free" }
                     } else {
                         Write-InfoPS "Default OpenRouter model: stepfun/step-3.5-flash:free"
                         $Model.Value = "stepfun/step-3.5-flash:free"
                         Set-PSCoderConfig -Updates @{ model = "stepfun/step-3.5-flash:free" }
                     }
                 } else {
-                    Write-ErrorPS "Invalid provider. Use: openrouter or groq"
+                    Write-ErrorPS "Invalid provider. Use: openrouter, groq, or orca"
                 }
             } else {
                 Write-HeaderPS "Current provider: $($Provider.Value)"
                 Write-Host "  Available providers:" -ForegroundColor Gray
                 Write-Host "  - openrouter (GPT, Gemini, Qwen, Llama...)" -ForegroundColor Gray
                 Write-Host "  - groq (Llama, Mixtral, Gemma, Qwen...)" -ForegroundColor Gray
+                Write-Host "  - orca (Z.AI GLM, GPT, Claude, Gemini via OrcaRouter)" -ForegroundColor Gray
                 Write-Host "  Use /provider <name> to change" -ForegroundColor Gray
             }
             return "continue"

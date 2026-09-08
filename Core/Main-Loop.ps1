@@ -159,6 +159,13 @@ function Start-PSCoder {
                         -Tools $toolSchemas `
                         -MaxTokens $config.maxTokens `
                         -Temperature $config.temperature
+                } elseif ($provider -eq "orca") {
+                    $response = Invoke-OrcaRouterChat `
+                        -Model $model `
+                        -Messages $messages `
+                        -Tools $toolSchemas `
+                        -MaxTokens $config.maxTokens `
+                        -Temperature $config.temperature
                 } else {
                     $response = Invoke-OpenRouterChat `
                         -Model $model `
@@ -483,6 +490,8 @@ function Invoke-AutoCompact {
             )
             if ($Provider -eq "groq") {
                 $summaryResp = Invoke-GroqChat -Model $Model -Messages $summaryMessages -MaxTokens 512 -Temperature 0.3
+            } elseif ($Provider -eq "orca") {
+                $summaryResp = Invoke-OrcaRouterChat -Model $Model -Messages $summaryMessages -MaxTokens 512 -Temperature 0.3
             } else {
                 $summaryResp = Invoke-OpenRouterChat -Model $Model -Messages $summaryMessages -MaxTokens 512 -Temperature 0.3
             }
