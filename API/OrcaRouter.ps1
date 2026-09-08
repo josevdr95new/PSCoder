@@ -1,6 +1,7 @@
 # OrcaRouter.ps1 - HTTP client for OrcaRouter API (OpenAI-compatible)
 # https://api.orcarouter.ai/v1/chat/completions
-# Modelos: z-ai/glm-5.3-flash, z-ai/glm-5.3, etc.
+# Modelos: z-ai/glm-5.3-flash-free (FREE), z-ai/glm-5.3, etc.
+# API Key: sk-orca-nzQIdv0h6Y4DHU8cgsl2jockrSESO1qQeiSukxJ6oZm
 
 $Script:OrcaRouterBaseURL = "https://api.orcarouter.ai/v1"
 
